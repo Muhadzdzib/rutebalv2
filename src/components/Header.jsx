@@ -3,38 +3,18 @@ import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Header() {
-  const [show, setShow] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > lastScrollY) {
-        setShow(false);
-      } else {
-        setShow(true);
-      }
-      setLastScrollY(window.scrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
-
   return (
-    <header
-      className={`fixed top-0 left-0 w-full font-Poppins backdrop-blur-md bg-white/10 shadow-sm z-50 transition-transform duration-500 ${
-        show ? "translate-y-0" : "-translate-y-full"
-      }`}
-    >
+    <header className="w-full font-Poppins bg-white shadow-md z-50">
       <div className="w-full px-[10%] py-4 flex items-center justify-between">
-        {/* Logo jadi link ke home */}
+        {/* Logo */}
         <Link to="/" className="text-2xl font-bold text-[#0895E0]">
           Rutebal
         </Link>
 
         {/* Nav desktop */}
-        <nav className="hidden md:flex space-x-6 font-medium text-white">
+        <nav className="hidden md:flex space-x-6 font-medium text-gray-700">
           <Link to="/panduan" className="hover:text-[#0895E0]">
             Panduan
           </Link>
@@ -48,7 +28,7 @@ export default function Header() {
 
         {/* Burger mobile */}
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-gray-700"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -57,14 +37,26 @@ export default function Header() {
 
       {/* Dropdown mobile */}
       {menuOpen && (
-        <div className="md:hidden bg-black/70 backdrop-blur-md text-white px-6 py-4 space-y-4">
-          <Link to="/panduan" className="block hover:text-[#0895E0]" onClick={() => setMenuOpen(false)}>
+        <div className="md:hidden bg-white border-t border-gray-200 text-gray-700 px-6 py-4 space-y-4">
+          <Link
+            to="/panduan"
+            className="block hover:text-[#0895E0]"
+            onClick={() => setMenuOpen(false)}
+          >
             Panduan
           </Link>
-          <Link to="/informasi" className="block hover:text-[#0895E0]" onClick={() => setMenuOpen(false)}>
+          <Link
+            to="/informasi"
+            className="block hover:text-[#0895E0]"
+            onClick={() => setMenuOpen(false)}
+          >
             Informasi
           </Link>
-          <Link to="/map" className="block hover:text-[#0895E0]" onClick={() => setMenuOpen(false)}>
+          <Link
+            to="/map"
+            className="block hover:text-[#0895E0]"
+            onClick={() => setMenuOpen(false)}
+          >
             Peta Rute
           </Link>
         </div>

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Listbox } from "@headlessui/react";
+import { ChevronDownIcon } from "lucide-react";
+
 
 export default function MapPage() {
   const mapRef = useRef(null);
@@ -242,6 +245,39 @@ export default function MapPage() {
     renderAllRoutes();
   };
 
+  // === Komponen Custom Select (Headless UI) ===
+  const CustomSelect = ({ value, setValue, options, placeholder, icon }) => (
+    <Listbox value={value} onChange={setValue}>
+      <div className="relative mb-3">
+        <Listbox.Button className="flex items-center w-full rounded-xl bg-[#1E1E1E]/90 text-white text-sm px-3 py-3 border border-[#0895E0]">
+          <span className="mr-2 text-[#0895E0] text-lg">{icon}</span>
+          <span className="truncate">
+            {value
+              ? options.find((o) => o.id_rute === value)?.nama
+              : placeholder}
+          </span>
+          <ChevronDownIcon className="ml-auto text-[#0895E0]" size={18} />
+        </Listbox.Button>
+
+        <Listbox.Options className="absolute mt-2 w-full bg-[#1E1E1E] rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto border border-[#0895E0]/40">
+          {options.map((h) => (
+            <Listbox.Option
+              key={h.id_rute}
+              value={h.id_rute}
+              className={({ active, selected }) =>
+                `cursor-pointer px-3 py-2 text-sm ${
+                  active ? "bg-[#0895E0]/40 text-white" : "text-gray-200"
+                } ${selected ? "font-semibold text-[#0895E0]" : ""}`
+              }
+            >
+              {h.nama}
+            </Listbox.Option>
+          ))}
+        </Listbox.Options>
+      </div>
+    </Listbox>
+  );
+
   return (
     <section
       id="map-page"
@@ -254,67 +290,50 @@ export default function MapPage() {
       />
 
       <div className="relative z-10 w-full flex flex-col md:flex-row mx-[10%] gap-6">
-        {/* Kiri: Form */}
-        <div className="w-full md:w-1/3 text-left text-white">
-          <h2 className="text-3xl md:text-5xl font-bold text-[#0895E0] leading-tight">
-            Cari Rute
-            <br />
-            Terpendek
-          </h2>
-          <div className="h-1 w-24 bg-[#0895E0] rounded mt-3 mb-6" />
+        {/* === Sidebar Kiri === */}
+        <div className="w-full md:w-1/3 flex flex-col gap-6 text-white">
+          {/* Title */}
+          <div>
+            <h2 className="text-3xl md:text-5xl text-[#0895E0] leading-tight">
+              Rekomendasi
+            </h2>
+            <div className="h-1 w-24 bg-[#0895E0] rounded mt-3" />
+          </div>
 
+          {/* Form Pencarian */}
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 flex flex-col gap-4">
-            {/* Asal */}
-            <div>
-              <label className="block text-sm mb-2">Pilih Halte Asal</label>
-              <select
-                value={asal}
-                onChange={(e) => setAsal(e.target.value)}
-                className="p-3 rounded-xl text-black text-sm w-full"
-              >
-                <option value="">Pilih Halte Asal</option>
-                {halteAsal.map((h) => (
-                  <option key={h.id_rute} value={h.id_rute}>
-                    {h.nama}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomSelect
+              value={asal}
+              setValue={setAsal}
+              options={halteAsal}
+              placeholder="Pilih Titik Awal"
+              icon="📍"
+            />
 
-            {/* Tujuan */}
-            <div>
-              <label className="block text-sm mb-2">Pilih Halte Tujuan</label>
-              <select
-                value={tujuan}
-                onChange={(e) => setTujuan(e.target.value)}
-                className="p-3 rounded-xl text-black text-sm w-full"
-              >
-                <option value="">Pilih Halte Tujuan</option>
-                {halteTujuan.map((h) => (
-                  <option key={h.id_rute} value={h.id_rute}>
-                    {h.nama}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomSelect
+              value={tujuan}
+              setValue={setTujuan}
+              options={halteTujuan}
+              placeholder="Pilih Destinasi"
+              icon="🚏"
+            />
 
-            {/* Tombol Cari */}
             <button
               onClick={fetchShortestPath}
-              className="mt-4 bg-[#0895E0] hover:bg-[#067bbf] text-white py-3 px-5 rounded-xl font-semibold"
+              className="mt-2 bg-[#0895E0] hover:bg-white hover:text-[#067bbf] text-white py-3 px-5 rounded-xl transition"
             >
-              Cari Rute Terpendek
+              Cari Rute !
             </button>
           </div>
 
           {/* Card Estimasi */}
           {estimasi && (
-            <div className="mt-6 bg-white/10 p-4 rounded-xl border border-white/20 shadow-lg">
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="bg-white/10 p-4 rounded-xl border border-white/20 shadow-lg max-w-sm w-full">
+              <h3 className="text-lg text-[#067bbf] mb-2">
                 Estimasi Jarak & Waktu
               </h3>
-              <p>Jarak Tempuh: ~ {estimasi.jarak} km</p>
-              <p>Waktu Tempuh: ~ {estimasi.waktu} menit</p>
+              <p>Jarak Tempuh: -+ {estimasi.jarak} km</p>
+              <p>Waktu Tempuh: -+ {estimasi.waktu} menit</p>
               <div className="flex gap-3 mt-3">
                 <button
                   onClick={() => setDetailVisible(true)}
@@ -331,9 +350,266 @@ export default function MapPage() {
               </div>
             </div>
           )}
+
+          {/* Legenda */}
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10 shadow-lg max-h-60 overflow-y-auto">
+            <h3 className="text-lg text-[#0895E0] mb-3">Legenda</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Item-item legenda tetap sama */}
+              {/* Item 1 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek1A.png`}
+                  alt="Angkot No 1 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 1 (A)</span>
+              </div>
+
+              {/* Item 2 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek1B.png`}
+                  alt="Angkot No 1 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 1 (B)</span>
+              </div>
+
+              {/* Item 3 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek2A.png`}
+                  alt="Angkot No 2 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 2 (A)</span>
+              </div>
+
+              {/* Item 4 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek2B.png`}
+                  alt="Angkot No 2 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 2 (B)</span>
+              </div>
+
+              {/* Item 5 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek3A.png`}
+                  alt="Angkot No 3 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 3 (A)</span>
+              </div>
+
+              {/* Item 6 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek3B.png`}
+                  alt="Angkot No 3 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 3 (B)</span>
+              </div>
+
+              {/* Item 7 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek5A.png`}
+                  alt="Angkot No 5 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 5 (A)</span>
+              </div>
+
+              {/* Item 8 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek5B.png`}
+                  alt="Angkot No 5 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 5 (B)</span>
+              </div>
+
+              {/* Item 9 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek6A.png`}
+                  alt="Angkot No 6 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 6 (A)</span>
+              </div>
+
+              {/* Item 10 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek6B.png`}
+                  alt="Angkot No 6 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 6 (B)</span>
+              </div>
+
+              {/* Item 11 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek7A.png`}
+                  alt="Angkot No 7 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 7 (A)</span>
+              </div>
+
+              {/* Item 12 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek7B.png`}
+                  alt="Angkot No 7 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 7 (B)</span>
+              </div>
+
+              {/* Item 11 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek8A.png`}
+                  alt="Angkot No 8 (A)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 8 (A)</span>
+              </div>
+
+              {/* Item 12 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/Trayek8B.png`}
+                  alt="Angkot No 8 (B)"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Angkot No 8 (B)</span>
+              </div>
+
+              {/* Item 13 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/KoridorA.png`}
+                  alt="Koridor A 1"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor A 1</span>
+              </div>
+
+              {/* Item  14 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }src/assets/img/KoridorA2.png`}
+                  alt="Koridor A 2"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor A 2</span>
+              </div>
+
+              {/* Item 15 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/KoridorB.png`}
+                  alt="Koridor B 1"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor B 1</span>
+              </div>
+
+              {/* Item  16 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }src/assets/img/KoridorB2.png`}
+                  alt="Koridor B 2"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor B 2</span>
+              </div>
+
+              {/* Item 17 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }src/assets/img/KoridorAB1.png`}
+                  alt="Koridor AB 1"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor AB 1</span>
+              </div>
+
+              {/* Item  18 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }src/assets/img/KoridorAB2.png`}
+                  alt="Koridor AB 2"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Koridor AB 2</span>
+              </div>
+
+              {/* Item 19 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/mall.png`}
+                  alt="Mall"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Mall</span>
+              </div>
+
+              {/* Item  20 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }src/assets/img/landscape.png`}
+                  alt="Landscape"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Wisata Alam</span>
+              </div>
+
+              {/* Item 21 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/market.png`}
+                  alt="Pasar"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Pasar</span>
+              </div>
+
+              {/* Item  22 */}
+              <div className="flex items-center gap-2 border border-[#0895E0]/40 rounded-lg px-2 py-2">
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/hospital.png`}
+                  alt="Rumah Sakit"
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">Rumah Sakit</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Kanan: Map */}
+        {/* === Map Kanan === */}
         <div className="w-full md:w-2/3 relative">
           <div className="w-full h-[520px] md:h-[600px] bg-white/10 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden border border-white/20">
             <div ref={mapRef} id="map" className="w-full h-full" />
@@ -359,7 +635,7 @@ export default function MapPage() {
                     <li key={i} className="text-sm">
                       <strong>
                         Rute dari {s.start} ke {s.end}
-                      </strong>{" "}
+                      </strong>
                       <br />
                       <span className="text-gray-600 text-xs">
                         Jarak: {s.jarak_tempuh?.toFixed(2)} km, Waktu:{" "}
