@@ -2,11 +2,13 @@
 
 @font-face {
   font-family: "Poppins";
-  src: url("./assets/font/Poppins.ttf") format("truetype");
+  src: url("./assets/font/Poppins.woff2") format("woff2"),
+    url("./assets/font/Poppins.woff") format("woff");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
- @theme{
-    --font-Poppins: Poppins, "sans-serif";
-    }
+@theme {
+  --font-Poppins: Poppins, "sans-serif";
+}

@@ -5,32 +5,36 @@ const steps = [
   {
     id: 1,
     title: "Tentukan titik awal terdekat",
-    content: "Detail langkah pertama...",
+    content:
+      "Click icon/gambar untuk melihat nama titik (Scroll untuk menampilkan icon)",
   },
   {
     id: 2,
     title: "Masukan titik awal dan titik tujuan",
-    content: "Detail langkah kedua...",
+    content: "Input titik awal dan tujuan pada form yang tersedia",
   },
   {
     id: 3,
     title: "Tekan tombol cari rute !",
-    content: "Detail langkah ketiga...",
+    content: "Click button cari rute untuk menemukan rekomendasi rute.",
   },
   {
     id: 4,
     title: "Lihat visualisasi rekomendasi rute pada maps",
-    content: "Detail langkah keempat...",
+    content:
+      "Sistem akan menampilkan visualisasi rute, card rekomendasi dan perjalanan detail pada maps",
   },
   {
     id: 5,
     title: "Menampilkan estimasi jarak & waktu tempuh pada card yang muncul",
-    content: "Detail langkah kelima...",
+    content:
+      "Sistem akan menampilkan estimasi jarak & waktu tempuh pada card yang muncul",
   },
   {
     id: 6,
     title: "Menampilkan rincian rute perjalanan (titik yang akan dilewati)",
-    content: "Detail langkah keenam...",
+    content:
+      "Untuk melihat rincian rute perjalanan, klik detail pada card estimasi",
   },
 ];
 
@@ -44,12 +48,8 @@ export default function Panduan() {
   return (
     <section
       id="home"
-      className="relative w-full h-screen flex items-center justify-center bg-[#212121] font-Poppins">
-      <img
-        src="/src/assets/img/bg-jalan.png"
-        alt="Balikpapan"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      className="relative w-100% h-screen pt-28 flex items-center justify-center bg-[#212121] font-Poppins"
+    >
       <div className="relative z-10 max-w-3xl mx-[10%] text-left">
         <h2 className="text-4xl font-bold text-[#0895E0] mb-8">
           Panduan Penggunaan

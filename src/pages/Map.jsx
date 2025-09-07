@@ -4,7 +4,6 @@ import "leaflet/dist/leaflet.css";
 import { Listbox } from "@headlessui/react";
 import { ChevronDownIcon } from "lucide-react";
 
-
 export default function MapPage() {
   const mapRef = useRef(null);
   const leafletMap = useRef(null);
@@ -15,13 +14,15 @@ export default function MapPage() {
   const [allRoutes, setAllRoutes] = useState([]);
   const polylinesRef = useRef([]);
   const markersRef = useRef([]);
+  const [currentZoom, setCurrentZoom] = useState(13);
+  const [showingShortestPath, setShowingShortestPath] = useState(false);
 
   // UI State
   const [estimasi, setEstimasi] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailSteps, setDetailSteps] = useState([]);
 
-  // === Lazy Load ICON ===
+  // Icon
   const getIcon = (file, size = [32, 37]) =>
     L.icon({
       iconUrl: `/src/assets/img/${file}`,
@@ -47,11 +48,15 @@ export default function MapPage() {
       Trayek5A: "Trayek5A.png",
       Trayek5B: "Trayek5b.png",
       Trayek6A: "Trayek6A.png",
-      Trayek6B: "Trayek6B.png",
+      Trayek6: "Trayek6B.png",
       Trayek7A: "Trayek7A.png",
       Trayek7B: "Trayek7B.png",
       Trayek8A: "Trayek8A.png",
       Trayek8B: "Trayek8B.png",
+      wisata: "Landscape.png",
+      mall: "mall.png",
+      pasar: "market.png",
+      rumahsakit: "hospital.png",
       here: "Here.png",
     };
     if (!jenis || !mapping[jenis]) return null;
@@ -81,11 +86,31 @@ export default function MapPage() {
     return "blue";
   };
 
+  const renderMarkerWithPopup = (point, jenis, nama) => {
+    if (!point || point.jenis === "titik") return null;
+    const ico = getIconByJenis(jenis);
+    const marker = L.marker(
+      [point.latitude, point.longitude],
+      ico ? { icon: ico } : {}
+    );
+    marker.bindPopup(
+      `<b>${nama || point.nama || "Tanpa Nama"}</b><br/>Jenis: ${
+        jenis || point.jenis || "-"
+      }`
+    );
+    marker.addTo(leafletMap.current);
+    markersRef.current.push(marker);
+  };
+
   // === INIT MAP ===
   useEffect(() => {
     if (leafletMap.current) return;
 
     leafletMap.current = L.map(mapRef.current).setView([-1.2423, 116.8571], 13);
+
+    leafletMap.current.on("zoomend", () => {
+      setCurrentZoom(leafletMap.current.getZoom());
+    });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -148,29 +173,21 @@ export default function MapPage() {
       if (!jenisRel || jenisRel === "jalan_kaki" || jenisRel === "transisi")
         return;
 
-      // Marker source
-      if (route.source?.jenis !== "titik") {
-        const ico = getIconByJenis(route.source.jenis);
-        const m = L.marker(
-          [route.source.latitude, route.source.longitude],
-          ico ? { icon: ico } : {}
+      // Lazy load marker: hanya tampil jika zoom >= 14
+      if (currentZoom >= 16) {
+        renderMarkerWithPopup(
+          route.source,
+          route.source?.jenis,
+          route.source?.nama
         );
-        m.addTo(leafletMap.current);
-        markersRef.current.push(m);
+        renderMarkerWithPopup(
+          route.target,
+          route.target?.jenis,
+          route.target?.nama
+        );
       }
 
-      // Marker target
-      if (route.target?.jenis !== "titik") {
-        const ico = getIconByJenis(route.target.jenis);
-        const m = L.marker(
-          [route.target.latitude, route.target.longitude],
-          ico ? { icon: ico } : {}
-        );
-        m.addTo(leafletMap.current);
-        markersRef.current.push(m);
-      }
-
-      // Polyline rute
+      // Polyline tetap digambar
       const allPoints = [
         route.source,
         ...(route.filteredPath || []),
@@ -187,9 +204,12 @@ export default function MapPage() {
     });
   };
 
+  // Render ulang rute hanya jika tidak sedang menampilkan shortest path
   useEffect(() => {
-    renderAllRoutes();
-  }, [allRoutes]);
+    if (!showingShortestPath) {
+      renderAllRoutes();
+    }
+  }, [allRoutes, currentZoom, showingShortestPath]);
 
   // === Shortest Path ===
   const fetchShortestPath = async () => {
@@ -221,6 +241,14 @@ export default function MapPage() {
       polylinesRef.current.push(line);
       leafletMap.current.fitBounds(line.getBounds());
 
+      // Tambahkan marker untuk titik awal dan akhir
+      if (data.path && data.path.length > 0) {
+        const first = data.path[0];
+        const last = data.path[data.path.length - 1];
+        renderMarkerWithPopup(first, first.jenis, first.nama);
+        renderMarkerWithPopup(last, last.jenis, last.nama);
+      }
+
       // === ✅ perhitungan estimasi sesuai rumus lama
       const jarak = data.totalCost ? data.totalCost.toFixed(2) : 0;
       const waktu = data.steps
@@ -233,6 +261,7 @@ export default function MapPage() {
 
       // set detail perjalanan
       setDetailSteps(data.steps || []);
+      setShowingShortestPath(true); // Set flag agar renderAllRoutes tidak dipanggil
     } catch (e) {
       console.error("Error shortest path:", e);
     }
@@ -241,6 +270,7 @@ export default function MapPage() {
   const resetMap = () => {
     setEstimasi(null);
     setDetailVisible(false);
+    setShowingShortestPath(false); // Reset flag
     clearMap();
     renderAllRoutes();
   };
@@ -281,14 +311,8 @@ export default function MapPage() {
   return (
     <section
       id="map-page"
-      className="relative w-full h-screen flex items-center bg-[#212121] font-Poppins"
+      className="relative w-100% h-100% flex items-center pt-28 bg-[#212121] font-Poppins"
     >
-      <img
-        src="/src/assets/img/bg-jalan.png"
-        alt="Balikpapan"
-        className="absolute inset-0 w-full h-full object-cover opacity-30"
-      />
-
       <div className="relative z-10 w-full flex flex-col md:flex-row mx-[10%] gap-6">
         {/* === Sidebar Kiri === */}
         <div className="w-full md:w-1/3 flex flex-col gap-6 text-white">
@@ -307,7 +331,13 @@ export default function MapPage() {
               setValue={setAsal}
               options={halteAsal}
               placeholder="Pilih Titik Awal"
-              icon="📍"
+              icon={
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/start.png`}
+                  alt="Titik Awal"
+                  className="w-6 h-6 inline"
+                />
+              }
             />
 
             <CustomSelect
@@ -315,7 +345,13 @@ export default function MapPage() {
               setValue={setTujuan}
               options={halteTujuan}
               placeholder="Pilih Destinasi"
-              icon="🚏"
+              icon={
+                <img
+                  src={`${import.meta.env.BASE_URL}src/assets/img/finish.png`}
+                  alt="Titik Awal"
+                  className="w-6 h-6 inline"
+                />
+              }
             />
 
             <button
@@ -617,9 +653,11 @@ export default function MapPage() {
 
           {/* Card Detail Perjalanan */}
           {detailVisible && (
-            <div className="absolute top-4 right-4 w-80 bg-white/90 p-4 rounded-xl shadow-xl text-black max-h-[90%] overflow-y-auto">
+            <div className="absolute top-4 right-4 w-80 bg-white/5 backdrop-blur-lg border border-white/30 p-4 rounded-xl shadow-xl text-black max-h-[90%] overflow-y-auto">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold">Detail Perjalanan</h3>
+                <h3 className="text-lg text-[#0895E0] font-semibold">
+                  Detail Perjalanan
+                </h3>
                 <button
                   onClick={() => setDetailVisible(false)}
                   className="text-red-500 font-bold"
@@ -637,7 +675,7 @@ export default function MapPage() {
                         Rute dari {s.start} ke {s.end}
                       </strong>
                       <br />
-                      <span className="text-gray-600 text-xs">
+                      <span className="text-[#0895E0] text-xs">
                         Jarak: {s.jarak_tempuh?.toFixed(2)} km, Waktu:{" "}
                         {s.waktu_tempuh?.toFixed(0)} ± menit
                       </span>
